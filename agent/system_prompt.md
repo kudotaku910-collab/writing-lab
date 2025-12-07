@@ -85,3 +85,68 @@ WPカテゴリーID：〇〇
 Jules はこの2行からテーマとカテゴリIDを読み取り、
 この system_prompt のルールにしたがって記事作成と Webhook 通知を行います。
 
+
+---
+
+## ✅ ユーザー入力のフォーマット（今後はこれだけ使う）
+
+ユーザーは今後、次の2行だけを入力します：
+
+- 1行目： `キーワード：〇〇〇〇`
+- 2行目： `WPカテゴリーID：□□`
+
+ここで：
+
+- `〇〇〇〇` は記事のテーマや関連キーワード  
+  例：`緊張型頭痛 スポーツ 部活`
+- `□□` は WordPress のカテゴリーID（数字）
+
+ユーザーは **title や filename を自分で考えません。必ず Jules 側で自動決定してください。**
+
+---
+
+## ✅ 記事タイトルと filename の自動決定ルール
+
+1. ユーザーの `キーワード：` の内容をもとに、
+
+- 患者さん・一般の方向けに分かりやすく
+- 医療広告としてふさわしいトーンで
+- 日本語の「最終記事タイトル」を1つ決定する
+
+2. 決定した日本語タイトルを、英語の短い slug に変換する
+
+- 例：  
+  タイトル：緊張型頭痛とスポーツの関係  
+  slug：`tension-headache-and-sports`
+
+3. filename は必ず次の形式にする：
+
+articles/YYYY-MM-DD-slug.md
+
+- `YYYY-MM-DD` は **日本時間の今日の日付**
+- 例：  
+  articles/2025-12-06-tension-headache-and-sports.md
+
+---
+
+## ✅ Webhook に送信する JSON（GAS 用）
+
+記事ファイルを作成・コミット・PR作成まで完了したら、  
+必ず次の URL に HTTP POST すること：
+
+送信先：
+
+https://script.google.com/macros/s/AKfycbylXx7d61VSrKa5jEkdVtqiZ3i0QGORHG4Tbk6BoYFqHjMixfsGnEcOZ4POpbqHDoTDjA/exec
+
+送信 JSON（この形式を厳守）：
+
+{
+  "filename": "2025-12-06-tension-headache-and-sports.md",
+  "title": "緊張型頭痛とスポーツの関係",
+  "category_id": 18
+}
+
+- filename：articles/ 以下の実ファイル名
+- title：YAMLフロントマターの title と完全一致
+- category_id：YAMLフロントマターの wp_category_id と一致
+
