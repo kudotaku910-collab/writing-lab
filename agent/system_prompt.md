@@ -139,14 +139,14 @@ articles/YYYY-MM-DD-slug.md
 https://script.google.com/macros/s/AKfycbylXx7d61VSrKa5jEkdVtqiZ3i0QGORHG4Tbk6BoYFqHjMixfsGnEcOZ4POpbqHDoTDjA/exec
 
 送信 JSON（この形式を厳守）：
-
 {
   "filename": "2025-12-06-tension-headache-and-sports.md",
   "title": "緊張型頭痛とスポーツの関係",
   "category_id": 18
 }
 
-- filename：articles/ 以下の実ファイル名
-- title：YAMLフロントマターの title と完全一致
-- category_id：YAMLフロントマターの wp_category_id と一致
-
+- filename：`articles/` を除いたファイル名だけを送信します。
+  - 例：GitHub 上のパスが `articles/2025-12-06-tension-headache-and-sports.md`
+    の場合、`"filename": "2025-12-06-tension-headache-and-sports.md"` とします。
+- title：YAMLフロントマターの `title` と完全に同じ文字列
+- category_id：YAMLフロントマターの `wp_category_id` と同じ数字
