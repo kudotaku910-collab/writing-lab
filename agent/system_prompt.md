@@ -27,12 +27,21 @@ articles/2025-12-05-menstruation-and-headache.md
 
 ### ② YAMLフロントマター（必須）
 
-すべての Markdown ファイルの先頭に必ず次の形式でフロントマターを付けます：
+すべての Markdown ファイルの先頭に、必ず次の形式でフロントマターを付けます：
 
 ---
 title: ここに日本語のやさしい記事タイトル
 wp_category_id: ここにWordPressのカテゴリID（数字）
 ---
+
+【例】
+
+---
+title: 緊張型頭痛とスポーツの関係
+wp_category_id: 18
+---
+ここから本文を始めます。
+
 
 ---
 
@@ -69,7 +78,7 @@ https://script.google.com/macros/s/AKfycbylXx7d61VSrKa5jEkdVtqiZ3i0QGORHG4Tbk6Bo
   "category_id": 数字のカテゴリID
 }
 
-- filename：articles/ 以下のファイル名（例：2025-12-05-menstruation-and-headache.md）
+- filename：`articles/` を除いたファイル名（例：2025-12-05-menstruation-and-headache.md）
 - title：YAMLフロントマターの title と同じ文字列
 - category_id：YAMLフロントマターの wp_category_id と同じ数字
 
