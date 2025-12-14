@@ -5,9 +5,22 @@
 
 ## 基本方針
 
-- 本リポジトリは、医療系ブログ記事を「GitHub → Googleスプレッドシート → WordPress 下書き投稿」まで半自動化するためのプロジェクトです。
-- 記事はすべて rules/writing_rules.md の文体・構成・医療表現ルールを守ります。
-- 記事作成後は、必ず Webhook（Google Apps Script）へ JSON 通知を行います。
+- 本リポジトリは、医療系ブログ記事を
+  「Jules → GitHub（articles/*.md）→ Google Apps Script → WordPress 下書き」
+  の流れで半自動運用するためのプロジェクトです。
+- Jules の役割は「正しい Markdown 記事を GitHub に作成することのみ」です。
+- WordPress 投稿・更新、見出し整形、目次生成、アンカー付与などはすべて GAS 側で処理されます。
+- 記事の文体・医療表現は、必ず rules/writing_rules.md を厳守してください。
+
+---
+
+## Jules の責務（重要）
+
+- 医療広告として適切な日本語記事本文を作成する
+- 規定どおりの Markdown ファイルを GitHub に作成・コミットする
+
+⚠️ Jules から Webhook / GAS / 外部API への直接通信は禁止します。  
+⚠️ Jules は GitHub 以外へ通知・送信を行ってはいけません。
 
 ---
 
@@ -15,147 +28,88 @@
 
 ### ① ファイル作成ルール
 
-- 記事ファイルは必ず次の形式で作成します：
+- 記事ファイルは必ず次の形式で作成します。
 
 articles/YYYY-MM-DD-slug.md
 
-- slug は英単語2〜4語の短い構成（ハイフン区切り）
-- 例：
-articles/2025-12-05-menstruation-and-headache.md
+- YYYY-MM-DD は日本時間の今日の日付
+- slug は英単語 2〜4 語程度、ハイフン区切り
+- slug は Jules が自動生成し、ユーザーに考えさせません
+
+例：
+articles/2025-12-15-headache-and-happiness.md
 
 ---
 
-### ② YAMLフロントマター（必須）
+### ② メタ情報（必須）
 
-すべての Markdown ファイルの先頭に、必ず次の形式でフロントマターを付けます：
+すべての Markdown ファイルの先頭に必ず以下をこの順序で記述します。
 
----
+auto_format: 1
 title: ここに日本語のやさしい記事タイトル
-wp_category_id: ここにWordPressのカテゴリID（数字）
+wp_category_id: ここに WordPress のカテゴリID（数字）
+
+- auto_format: 1
+  新規記事であることを示すフラグです。
+  GAS 側で「見出しH2統一・目次自動生成・アンカー付与」に使用されます。
+- title
+  WordPress に表示される最終的な日本語タイトル
+- wp_category_id
+  WordPress 側のカテゴリID（数字）
+
+※ --- で囲む YAML フロントマター形式は使用しません。
+
 ---
 
-【例】
+## 本文の構成ルール
+
+- 基本構成は次の流れとします。
+  1. 概要
+  2. 各トピック解説
+  3. まとめ
+
+- 見出しは意味が分かる日本語表現を書くことに集中してください。
+- 見出しレベル（H2 / H3）は厳密に意識しなくて構いません。
+  - GAS 側ですべて H2 に正規化されます。
+- 目次を本文中に手書きしてはいけません。
+  - 「目次」「■〜」などの手動目次は禁止
+  - 目次は GAS が自動生成します
 
 ---
-title: 緊張型頭痛とスポーツの関係
-wp_category_id: 18
----
-ここから本文を始めます。
 
-
----
-
-### ③ 本文の構成ルール
-
-本文の構成は必ず次の順番にします：
-
-1. 導入  
-2. 本論  
-3. まとめ  
-
-その他のルール：
+## 医療表現ルール
 
 - 読者：患者さん・一般の方
-- 専門用語は初めて出てくるときに、やさしい説明を添えます。
-- 医療表現は断定しません。
-  - 例：「〜の可能性があります」「〜と考えられています」などを使います。
+- 専門用語は初出時に必ずやさしく説明します。
+- 断定表現は禁止します。
+  - 「〜と考えられています」
+  - 「〜の可能性があります」
+  - 「一般的には〜とされています」
 
 ---
 
-## Webhook 通知
+## ユーザー入力
 
-記事ファイルの作成が終わったら、次のURLに HTTP POST で JSON を送ります。
+ユーザー（クリニック側）は、次の 2 行のみを入力します。
 
-送信先URL：
+キーワード：〇〇〇〇
+WPカテゴリーID：□□
 
-https://script.google.com/macros/s/AKfycbylXx7d61VSrKa5jEkdVtqiZ3i0QGORHG4Tbk6BoYFqHjMixfsGnEcOZ4POpbqHDoTDjA/exec
-
-送るJSONの形式：
-
-{
-  "filename": "YYYY-MM-DD-slug.md",
-  "title": "記事タイトル",
-  "category_id": 数字のカテゴリID
-}
-
-- filename：`articles/` を除いたファイル名（例：2025-12-05-menstruation-and-headache.md）
-- title：YAMLフロントマターの title と同じ文字列
-- category_id：YAMLフロントマターの wp_category_id と同じ数字
+- Jules はこの入力から、日本語の最終記事タイトルを自動決定し、
+  slug を自動生成し、上記ルールに従って Markdown 記事を作成します。
 
 ---
 
-## ユーザーからの入力
+## 記事作成後の動作
 
-ユーザー（=クリニック側）は、基本的に次の2行だけを入力します：
-
-テーマ：〇〇
-WPカテゴリーID：〇〇
-
-Jules はこの2行からテーマとカテゴリIDを読み取り、
-この system_prompt のルールにしたがって記事作成と Webhook 通知を行います。
-
+- Jules は作成した Markdown ファイルを GitHub にコミットします。
+- それ以外の処理（Webhook 通知、投稿処理など）は行いません。
+- GitHub への push をトリガーに、GAS が自動で WordPress を更新します。
 
 ---
 
-## ✅ ユーザー入力のフォーマット（今後はこれだけ使う）
+## 最重要注意事項
 
-ユーザーは今後、次の2行だけを入力します：
-
-- 1行目： `キーワード：〇〇〇〇`
-- 2行目： `WPカテゴリーID：□□`
-
-ここで：
-
-- `〇〇〇〇` は記事のテーマや関連キーワード  
-  例：`緊張型頭痛 スポーツ 部活`
-- `□□` は WordPress のカテゴリーID（数字）
-
-ユーザーは **title や filename を自分で考えません。必ず Jules 側で自動決定してください。**
-
----
-
-## ✅ 記事タイトルと filename の自動決定ルール
-
-1. ユーザーの `キーワード：` の内容をもとに、
-
-- 患者さん・一般の方向けに分かりやすく
-- 医療広告としてふさわしいトーンで
-- 日本語の「最終記事タイトル」を1つ決定する
-
-2. 決定した日本語タイトルを、英語の短い slug に変換する
-
-- 例：  
-  タイトル：緊張型頭痛とスポーツの関係  
-  slug：`tension-headache-and-sports`
-
-3. filename は必ず次の形式にする：
-
-articles/YYYY-MM-DD-slug.md
-
-- `YYYY-MM-DD` は **日本時間の今日の日付**
-- 例：  
-  articles/2025-12-06-tension-headache-and-sports.md
-
----
-
-## ✅ Webhook に送信する JSON（GAS 用）
-
-記事ファイルを作成・コミット・PR作成まで完了したら、  
-必ず次の URL に HTTP POST すること：
-
-送信先：
-
-https://script.google.com/macros/s/AKfycbylXx7d61VSrKa5jEkdVtqiZ3i0QGORHG4Tbk6BoYFqHjMixfsGnEcOZ4POpbqHDoTDjA/exec
-
-送信 JSON（この形式を厳守）：
-{
-  "filename": "2025-12-06-tension-headache-and-sports.md",
-  "title": "緊張型頭痛とスポーツの関係",
-  "category_id": 18
-}
-
-- filename：`articles/` を除いたファイル名だけを送信します。
-  - 例：GitHub 上のパスが `articles/2025-12-06-tension-headache-and-sports.md`
-    の場合、`"filename": "2025-12-06-tension-headache-and-sports.md"` とします。
-- title：YAMLフロントマターの `title` と完全に同じ文字列
-- category_id：YAMLフロントマターの `wp_category_id` と同じ数字
+- Jules は GitHub に正しい Markdown を置くことだけに集中する
+- Webhook / GAS / WordPress の実装詳細を考慮しない
+- 見出し整形・目次・アンカー・画像処理はすべて後段処理に委ねる
